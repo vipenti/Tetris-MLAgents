@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
+using UnityEngine.UI;
 
 public class Board : MonoBehaviour
 {
@@ -17,6 +18,11 @@ public class Board : MonoBehaviour
     public Vector3Int spawnPosition;
     public Vector2Int boardSize = new Vector2Int(10, 20);
 
+    public GameObject pointsViewer;
+    public GameObject levelViewer;
+
+    public long points;
+    public int level; 
     //Rettangolo che calcola l'area di gioco usato in IsValidPosition
     public RectInt Bounds
     {
@@ -32,6 +38,9 @@ public class Board : MonoBehaviour
         this.tilemap = GetComponentInChildren<Tilemap>();
         this.active_piece = GetComponentInChildren<Piece>();
 
+        points = 0;
+        level = 1;
+
         //Inizializza la pool dei pezzi da cui pescare per lo spawn casuale
         for (int i = 0; i < this.pieces.Length; i++) {
             this.pieces[i].Initialize();
@@ -41,6 +50,15 @@ public class Board : MonoBehaviour
     private void Start()
     {
         SpawnPiece();
+    }
+
+    private void LateUpdate()
+    {
+        UIUpdate();
+        if (level != LevelUpdate()) {
+            level = LevelUpdate();
+            active_piece.stepDelay = active_piece.stepDelay - 0.15f;
+        }
     }
 
     public void SpawnPiece()
@@ -101,6 +119,9 @@ public class Board : MonoBehaviour
 
     //Chiama LineClear() se trova una riga piena
     public void ClearLines() {
+        
+        //Il contatore di combo conta se si sono pulite 4 o più righe insieme, per aumentare il punteggio
+        int combo = 0;
 
         RectInt bounds = this.Bounds;
         int row = bounds.yMin;
@@ -108,8 +129,19 @@ public class Board : MonoBehaviour
         while(row < bounds.yMax) {
             if(IsLineFull(row)) {
                 LineClear(row);
+                combo++;
+                if (combo == 4) {
+                    points += 800;
+                }
+                else if (combo > 4) {
+                    points += 1200;
+                }
+                else { points += 100; }
             }
-            else { row++; }
+            else { 
+                row++; 
+                combo = 0; 
+            }
         }
     }
 
@@ -157,6 +189,25 @@ public class Board : MonoBehaviour
 
     private void GameOver()
     {
+        points = 0;
         this.tilemap.ClearAllTiles();
+    }
+
+    private void UIUpdate()
+    {
+       pointsViewer.GetComponent<Text>().text = "" + points;
+       levelViewer.GetComponent<Text>().text = "" + level;
+    }
+
+    private int LevelUpdate() {
+
+        int necessaryPoints = level * 1000;
+
+        if(points >= necessaryPoints) {
+            level++;
+        }
+
+        return level;
+
     }
 }
