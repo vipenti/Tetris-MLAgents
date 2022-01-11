@@ -22,7 +22,9 @@ public class Board : MonoBehaviour
     public GameObject levelViewer;
 
     public long points;
-    public int level; 
+    public int level;
+    //variabile aggiunta per capire quando è game over e eseguire l'EndEpisode() e punire l'agente con SetReward();
+    public bool game_over = false;
     //Rettangolo che calcola l'area di gioco usato in IsValidPosition
     public RectInt Bounds
     {
@@ -42,7 +44,8 @@ public class Board : MonoBehaviour
         level = 1;
 
         //Inizializza la pool dei pezzi da cui pescare per lo spawn casuale
-        for (int i = 0; i < this.pieces.Length; i++) {
+        for (int i = 0; i < this.pieces.Length; i++)
+        {
             this.pieces[i].Initialize();
         }
     }
@@ -55,7 +58,8 @@ public class Board : MonoBehaviour
     private void LateUpdate()
     {
         UIUpdate();
-        if (level != LevelUpdate()) {
+        if (level != LevelUpdate())
+        {
             level = LevelUpdate();
             active_piece.stepDelay = active_piece.stepDelay - 0.15f;
         }
@@ -69,16 +73,18 @@ public class Board : MonoBehaviour
 
         this.active_piece.Initialize(this, this.spawnPosition, data);
 
-        if(IsValidPosition(this.active_piece, this.spawnPosition)) {
+        if (IsValidPosition(this.active_piece, this.spawnPosition))
+        {
             Set(this.active_piece);
         }
 
-        else { GameOver();  }
+        else { GameOver(); }
     }
 
     public void Set(Piece piece)
     {
-        for(int i = 0; i < piece.cells.Length; i++) {
+        for (int i = 0; i < piece.cells.Length; i++)
+        {
 
             //Vengono prese le singole celle e shiftate della posizione totale del pezzo
             Vector3Int tilePosition = piece.cells[i] + piece.position;
@@ -102,15 +108,19 @@ public class Board : MonoBehaviour
     {
         RectInt bounds = this.Bounds;
 
-        for(int i = 0; i < piece.cells.Length; i++) {
+        for (int i = 0; i < piece.cells.Length; i++)
+        {
             Vector3Int tilePosition = piece.cells[i] + position;
 
             //Controlla se una delle celle è fuori dal rettangolo della board
-            if(!bounds.Contains((Vector2Int)tilePosition)) {
+            if (!bounds.Contains((Vector2Int)tilePosition))
+            {
                 return false;
             }
 
-            if(this.tilemap.HasTile(tilePosition)) {
+            if (this.tilemap.HasTile(tilePosition))
+            {
+                print("tileposition= " + tilemap.GetTile(tilePosition).ToString());
                 return false;
             }
         }
@@ -118,29 +128,35 @@ public class Board : MonoBehaviour
     }
 
     //Chiama LineClear() se trova una riga piena
-    public void ClearLines() {
-        
+    public void ClearLines()
+    {
+
         //Il contatore di combo conta se si sono pulite 4 o più righe insieme, per aumentare il punteggio
         int combo = 0;
 
         RectInt bounds = this.Bounds;
         int row = bounds.yMin;
 
-        while(row < bounds.yMax) {
-            if(IsLineFull(row)) {
+        while (row < bounds.yMax)
+        {
+            if (IsLineFull(row))
+            {
                 LineClear(row);
                 combo++;
-                if (combo == 4) {
+                if (combo == 4)
+                {
                     points += 800;
                 }
-                else if (combo > 4) {
+                else if (combo > 4)
+                {
                     points += 1200;
                 }
                 else { points += 100; }
             }
-            else { 
-                row++; 
-                combo = 0; 
+            else
+            {
+                row++;
+                combo = 0;
             }
         }
     }
@@ -151,11 +167,13 @@ public class Board : MonoBehaviour
     {
         RectInt bounds = this.Bounds;
 
-        for(int col = bounds.xMin; col < bounds.xMax; col++) {
+        for (int col = bounds.xMin; col < bounds.xMax; col++)
+        {
 
             Vector3Int position = new Vector3Int(col, row, 0);
 
-            if(!this.tilemap.HasTile(position)) {
+            if (!this.tilemap.HasTile(position))
+            {
                 return false;
             }
         }
@@ -168,12 +186,14 @@ public class Board : MonoBehaviour
     {
         RectInt bounds = this.Bounds;
 
-        for (int col = bounds.xMin; col < bounds.xMax; col++) {
+        for (int col = bounds.xMin; col < bounds.xMax; col++)
+        {
             Vector3Int position = new Vector3Int(col, row, 0);
             this.tilemap.SetTile(position, null);
         }
 
-        while (row < bounds.yMax) {
+        while (row < bounds.yMax)
+        {
             for (int col = bounds.xMin; col < bounds.xMax; col++)
             {
                 Vector3Int position = new Vector3Int(col, row + 1, 0);
@@ -190,24 +210,45 @@ public class Board : MonoBehaviour
     private void GameOver()
     {
         points = 0;
+        game_over = true; //setto la variabile qui.
         this.tilemap.ClearAllTiles();
     }
 
     private void UIUpdate()
     {
-       pointsViewer.GetComponent<Text>().text = "" + points;
-       levelViewer.GetComponent<Text>().text = "" + level;
+        pointsViewer.GetComponent<Text>().text = "" + points;
+        levelViewer.GetComponent<Text>().text = "" + level;
     }
 
-    private int LevelUpdate() {
+    private int LevelUpdate()
+    {
 
         int necessaryPoints = level * 1000;
 
-        if(points >= necessaryPoints) {
+        if (points >= necessaryPoints)
+        {
             level++;
         }
 
         return level;
 
     }
+
+    public int IsCellOccupied(int row, int col)
+    {
+        Vector3Int position = new Vector3Int(col, row, 0);
+
+        if (!this.tilemap.HasTile(position))
+        {
+            return 0;
+        }
+        else
+            return 1;
+    }
+
+    public bool IsGameOver()
+    {
+        return game_over;
+    }
+
 }
