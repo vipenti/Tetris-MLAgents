@@ -120,7 +120,6 @@ public class Board : MonoBehaviour
 
             if (this.tilemap.HasTile(tilePosition))
             {
-                print("tileposition= " + tilemap.GetTile(tilePosition).ToString());
                 return false;
             }
         }
@@ -146,10 +145,12 @@ public class Board : MonoBehaviour
                 if (combo == 4)
                 {
                     points += 800;
+                    active_piece.Reward(0.6f); //premio se fa le combo
                 }
                 else if (combo > 4)
                 {
                     points += 1200;
+                    active_piece.Reward(0.7f); //premio se fa le combo
                 }
                 else { points += 100; }
             }
@@ -177,7 +178,7 @@ public class Board : MonoBehaviour
                 return false;
             }
         }
-
+        active_piece.Reward(0.8f); //premio se riempie una linea
         return true;
     }
 
@@ -228,6 +229,7 @@ public class Board : MonoBehaviour
         if (points >= necessaryPoints)
         {
             level++;
+            active_piece.Reward(0.5f); //salgo di livello premio l'agente
         }
 
         return level;
@@ -250,5 +252,6 @@ public class Board : MonoBehaviour
     {
         return game_over;
     }
+
 
 }

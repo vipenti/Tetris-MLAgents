@@ -137,7 +137,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.ml-agents": {
-      "version": "file:C:/Users/kinni/Downloads/ml-agents-release_8/ml-agents-release_8/com.unity.ml-agents",
+      "version": "file:C:/Users/kinni/Downloads/ml-agents-release_8new/ml-agents-release_8/com.unity.ml-agents",
       "depth": 0,
       "source": "local",
       "dependencies": {
@@ -149,7 +149,7 @@
       }
     },
     "com.unity.ml-agents.extensions": {
-      "version": "file:C:/Users/kinni/Downloads/ml-agents-release_8/ml-agents-release_8/com.unity.ml-agents.extensions",
+      "version": "file:C:/Users/kinni/Downloads/ml-agents-release_8new/ml-agents-release_8/com.unity.ml-agents.extensions",
       "depth": 0,
       "source": "local",
       "dependencies": {

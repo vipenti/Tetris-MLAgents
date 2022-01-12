@@ -31,6 +31,9 @@ public class Piece : Agent
     //variabili aggiunte
     private ActionSegment<int> act; //salvo i dicreteActionOut in Heuristic per usarli al di fuori della funzione
     private int last_move = 2;
+    private int last_rotate = 2;
+    private int last_hardt = 1;
+    private int last_down = 1;
     public void Initialize(Board board, Vector3Int position, PieceGroupsData data)
     {
         this.board = board;
@@ -50,6 +53,7 @@ public class Piece : Agent
         for(int i = 0; i < data.cells.Length; i++) {
             this.cells[i] = (Vector3Int)data.cells[i];
         }
+        
     }
 
     public override void CollectObservations(VectorSensor sensor) //osservo se le celle sono occupate
@@ -66,67 +70,13 @@ public class Piece : Agent
 
     public override void OnActionReceived(ActionBuffers actionBuffers)
     {
-        //spostamento destra, sinistra o non mi muovo affatto
-        if (actionBuffers.DiscreteActions[0] == 0)
-        {
-            //Move(Vector2Int.left);
-        }
-        else if (actionBuffers.DiscreteActions[0] == 1)
-        {
-            //Move(Vector2Int.right);
-        }
-        else
-        {
-           ;
-        }
-
-
-        //rotazione
-        /*if (actionBuffers.DiscreteActions[1] == 0)
-        {
-            Rotate(1);
-        }
-        else if (actionBuffers.DiscreteActions[1] == 1)
-        {
-            Rotate(-1);
-        }
-        else 
-        {
-            ;
-        }
-
-
-        //ArrowDown
-        if (actionBuffers.DiscreteActions[2] == 0)
-        {
-            Move(Vector2Int.down);
-        }
-        else if (actionBuffers.DiscreteActions[2] == 1)
-        {
-            ;
-        }
-        else {; }
-
-
-        //HardDrop
-        if (actionBuffers.DiscreteActions[3] == 0)
-        {
-            HardDrop();
-        }
-        else if(actionBuffers.DiscreteActions[3] == 1)
-        {
-            ; 
-        }
-        else
-        {
-            ;
-        }*/
+        act = actionBuffers.DiscreteActions;
 
         //print("boad.IsGameOver = " + board.IsGameOver());
         if (board.IsGameOver() == true)
         {
-            //print("game over");
-            SetReward(-1f);
+            print("game over");
+            SetReward(-0.9f);
             EndEpisode();
         }
 
@@ -180,6 +130,35 @@ public class Piece : Agent
             Move(Vector2Int.right);
             act[0] = 2;
         }
+        if (act[0] == 0)
+        {
+            Move(Vector2Int.left);
+            act[0] = 2;
+        }
+        //abbiamo premuto Comma
+        if(act[1] == 0)
+        {
+            Rotate(-1);
+            act[1] = 2;
+        }
+        //abbiamo premuto Period
+        if (act[1] == 1)
+        {
+            Rotate(1);
+            act[1] = 2;
+        }
+
+        if(act[2] == 0)
+        {
+            HardDrop();
+            act[2] = 1;
+        }
+
+        if(act[3] == 0)
+        {
+            Move(Vector2Int.down);
+            act[3] = 1;
+        }
         /*if (Input.GetKeyDown(KeyCode.Comma)) {
             Rotate(-1);
         }
@@ -225,6 +204,40 @@ public class Piece : Agent
             return 2;  
     }
 
+    public int getActionRotate()
+    {
+        if (Input.GetKey(KeyCode.Comma))
+        {
+            return 0;
+        }
+        else if (Input.GetKey(KeyCode.Period))
+        {
+            return 1;
+        }
+        else
+            return 2;
+    }
+
+    public int getActionHardTrop()
+    {
+        if (Input.GetKey(KeyCode.Space))
+        {
+            return 0;
+        }
+        else
+            return 1;
+    }
+
+    public int getActionDown()
+    {
+        if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow))
+        {
+            return 0;
+        }
+        else
+            return 1;
+    }
+
     //stavo cercando di usare destra e sinistra senza gli altri comandi. Last_move = 2 significa che l'agente non deve far nulla e quindi non
     //spamma gli altri tasti che mi è sembrato si accavallano tra loro e succedono cose strane.
     public override void Heuristic(in ActionBuffers actionsOut)
@@ -232,7 +245,7 @@ public class Piece : Agent
         ActionSegment<int> discreteActionsOut = actionsOut.DiscreteActions;
         if (last_move != getActionMoveLeftandRight()) //quindi mi voglio muovere a destra o a sinistra
         {
-            discreteActionsOut[0] = getActionMoveLeftandRight();
+            discreteActionsOut[0] = getActionMoveLeftandRight(); 
             print("last move = " + last_move);
             last_move = getActionMoveLeftandRight();
         }
@@ -240,11 +253,39 @@ public class Piece : Agent
         {
             discreteActionsOut[0] = 2; //non fare niente
         }
-        act = discreteActionsOut;
-        print("act = " + act[0]);
-        /*discreteActionsOut[1] = -1;
-        discreteActionsOut[2] = -1;
-        discreteActionsOut[3] = -1;*/
+
+        if (last_rotate != getActionRotate())
+        {
+            discreteActionsOut[1] = getActionRotate();
+            last_rotate = getActionRotate();
+        }
+        else
+        {
+            discreteActionsOut[1] = 2; //non fare niente
+        }
+
+        if( last_hardt != getActionHardTrop())
+        {
+            discreteActionsOut[2] = getActionHardTrop();
+            last_hardt = getActionHardTrop();
+        }
+        else
+        {
+            discreteActionsOut[2] = 1; //non fare niente
+        }
+
+        if (last_down != getActionDown())
+        {
+            discreteActionsOut[3] = getActionDown();
+            last_down = getActionDown();
+        }
+        else
+        {
+            discreteActionsOut[3] = 1; //non fare niente
+        }
+
+        act = discreteActionsOut; //salviamo l'array degli actionbuffer per poterla utilizzare anche nel metodo Update per eseguire i comandi che corrispondono al contenuto del buffer
+ 
     }
 
     private void Step()
