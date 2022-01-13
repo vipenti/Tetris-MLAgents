@@ -67,19 +67,20 @@ public class Piece : Agent
         }
     }
 
+   
+
 
     public override void OnActionReceived(ActionBuffers actionBuffers)
     {
         act = actionBuffers.DiscreteActions;
 
         //print("boad.IsGameOver = " + board.IsGameOver());
-        if (board.IsGameOver() == true)
+        /*if (board.IsGameOver() == true)
         {
             print("game over");
             SetReward(-0.9f);
             EndEpisode();
-        }
-
+        }*/
 
        /*if (actionBuffers.DiscreteActions[0] == 0)
        {

@@ -145,7 +145,7 @@ public class Board : MonoBehaviour
                 if (combo == 4)
                 {
                     points += 800;
-                    active_piece.Reward(0.6f); //premio se fa le combo
+                    active_piece.Reward(0.7f); //premio se fa le combo
                 }
                 else if (combo > 4)
                 {
@@ -167,6 +167,19 @@ public class Board : MonoBehaviour
     public bool IsLineFull(int row)
     {
         RectInt bounds = this.Bounds;
+        int count = 0;
+
+        for (int col = bounds.xMin; col < bounds.xMax; col++)
+        {
+
+            Vector3Int position = new Vector3Int(col, row, 0);
+
+            if (this.tilemap.HasTile(position))
+            {
+                count++;
+            }
+        }
+        active_piece.Reward(count*count);
 
         for (int col = bounds.xMin; col < bounds.xMax; col++)
         {
@@ -178,7 +191,7 @@ public class Board : MonoBehaviour
                 return false;
             }
         }
-        active_piece.Reward(0.8f); //premio se riempie una linea
+        active_piece.Reward(100f); //premio se riempie una linea
         return true;
     }
 
@@ -211,8 +224,10 @@ public class Board : MonoBehaviour
     private void GameOver()
     {
         points = 0;
-        game_over = true; //setto la variabile qui.
         this.tilemap.ClearAllTiles();
+        active_piece.SetReward(-100f);
+        active_piece.EndEpisode();
+        //game_over = true; //setto la variabile qui.
     }
 
     private void UIUpdate()
@@ -248,10 +263,10 @@ public class Board : MonoBehaviour
             return 1;
     }
 
-    public bool IsGameOver()
+    /*public bool IsGameOver()
     {
         return game_over;
-    }
+    }*/
 
 
 }

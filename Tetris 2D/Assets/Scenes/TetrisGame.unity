@@ -604,8 +604,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a5c9d521e5ef4759a8246a07d52221e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  DecisionPeriod: 2
-  TakeActionsBetweenDecisions: 0
+  DecisionPeriod: 20
+  TakeActionsBetweenDecisions: 1
 --- !u!114 &627520296
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -621,7 +621,7 @@ MonoBehaviour:
   agentParameters:
     maxStep: 0
   hasUpgradedFromAgentParameters: 1
-  MaxStep: 500
+  MaxStep: 0
 --- !u!114 &627520297
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -636,7 +636,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_BrainParameters:
     VectorObservationSize: 200
-    NumStackedVectorObservations: 4
+    NumStackedVectorObservations: 10
     VectorActionSize: 03000000030000000200000002000000
     VectorActionDescriptions: []
     VectorActionSpaceType: 0
