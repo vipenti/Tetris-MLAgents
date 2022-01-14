@@ -6,13 +6,15 @@ using UnityEngine.UI;
 
 public class Board : MonoBehaviour
 {
+    public GameObject agent;
+    public int holes { get; private set; }
     //Questa classe gestisce la board di gioco
 
     //L'oggetto Board ha una Tilemap come oggetto figlio
     public Tilemap tilemap { get; private set; }
 
     //Riferimento al pezzo attualmente in movimento
-    public Piece active_piece { get; private set; }
+    public Piece active_piece;
 
     public PieceGroupsData[] pieces;
     public Vector3Int spawnPosition;
@@ -67,6 +69,20 @@ public class Board : MonoBehaviour
 
     public void SpawnPiece()
     {
+        int reward = 0;
+
+        for (int col = Bounds.xMin; col < Bounds.xMax; col++)
+        {
+            for (int row = Bounds.yMin; row < Bounds.yMax; row++)
+            {
+                if (IsCellOccupied(row, col) == 1)
+                {
+                    reward++;
+                    break;
+                }
+            }
+        }
+        agent.GetComponent<PlayerAgent>().AddReward(reward * -reward); //punizione se crea torri di tetramini alte
         //Spawna un pezzo casuale dalla pool
         int random = Random.Range(0, this.pieces.Length);
         PieceGroupsData data = this.pieces[random];
@@ -85,7 +101,6 @@ public class Board : MonoBehaviour
     {
         for (int i = 0; i < piece.cells.Length; i++)
         {
-
             //Vengono prese le singole celle e shiftate della posizione totale del pezzo
             Vector3Int tilePosition = piece.cells[i] + piece.position;
 
@@ -145,12 +160,12 @@ public class Board : MonoBehaviour
                 if (combo == 4)
                 {
                     points += 800;
-                    active_piece.Reward(0.7f); //premio se fa le combo
+                    agent.GetComponent<PlayerAgent>().AddReward(0.7f); //premio se fa le combo
                 }
                 else if (combo > 4)
                 {
                     points += 1200;
-                    active_piece.Reward(0.7f); //premio se fa le combo
+                    agent.GetComponent<PlayerAgent>().AddReward(0.7f); //premio se fa le combo
                 }
                 else { points += 100; }
             }
@@ -179,7 +194,7 @@ public class Board : MonoBehaviour
                 count++;
             }
         }
-        active_piece.Reward(count*count);
+        agent.GetComponent<PlayerAgent>().AddReward(count * count);
 
         for (int col = bounds.xMin; col < bounds.xMax; col++)
         {
@@ -191,7 +206,7 @@ public class Board : MonoBehaviour
                 return false;
             }
         }
-        active_piece.Reward(100f); //premio se riempie una linea
+        agent.GetComponent<PlayerAgent>().AddReward(100f); //premio se riempie una linea
         return true;
     }
 
@@ -225,8 +240,10 @@ public class Board : MonoBehaviour
     {
         points = 0;
         this.tilemap.ClearAllTiles();
-        active_piece.SetReward(-100f);
-        active_piece.EndEpisode();
+        agent.GetComponent<PlayerAgent>().SetReward(-100f);
+        agent.GetComponent<PlayerAgent>().EndEpisode();
+        //active_piece.SetReward(-100f);
+        //active_piece.EndEpisode();
         //game_over = true; //setto la variabile qui.
     }
 
@@ -244,7 +261,7 @@ public class Board : MonoBehaviour
         if (points >= necessaryPoints)
         {
             level++;
-            active_piece.Reward(0.5f); //salgo di livello premio l'agente
+            agent.GetComponent<PlayerAgent>().AddReward(10f); //salgo di livello premio l'agente
         }
 
         return level;
@@ -263,10 +280,93 @@ public class Board : MonoBehaviour
             return 1;
     }
 
-    /*public bool IsGameOver()
+    //metodi aggiunti a cui accedere l'agente
+    public void DecidedMove(int a, int i)
     {
-        return game_over;
-    }*/
+        if (a == 0 && i == 0)
+        {
+            //active_piece.Move(Vector2Int.right);
+            active_piece.act[0] = 0;
+        }
+        if (a == 0 && i == 1)
+        {
+            active_piece.act[0] = 1;
+            //active_piece.Move(Vector2Int.left);
+        }
 
+        if (a == 0 && i == 2)
+        {
+            ;
+        }
+    }
+
+    public void DecidedRotate(int a, int i)
+    {
+        if (a == 1 && i == 0)
+        {
+            active_piece.act[1] = 0;
+            //active_piece.Rotate(-1);
+        }
+        if (a == 1 && i == 1)
+        {
+            active_piece.act[1] = 1;
+            //active_piece.Rotate(1);
+        }
+        if (a == 1 && i == 2)
+        {
+            ;
+        }
+    }
+
+    public void DecidedHardDrop(int a, int i)
+    {
+        if (a == 2 && i == 0)
+        {
+            active_piece.act[2] = 0;
+            //active_piece.HardDrop();
+        }
+        if (a == 2 && i == 1)
+        {
+            ;
+        }
+    }
+
+    public void DecidedMoveDown(int a, int i)
+    {
+        if (a == 3 && i == 0)
+        {
+            active_piece.act[3] = 0;
+            //active_piece.Move(Vector2Int.down);
+        }
+        if (a == 3 && i == 1)
+        {
+            ;
+        }
+    }
+
+    public int Holes()
+    {
+        RectInt bounds = this.Bounds;
+        int holes = 0;
+
+        for (int row = bounds.yMin + 1; row < bounds.yMax - 1; row++)
+        {
+            for (int col = bounds.xMin; col < bounds.xMax; col++)
+            {
+
+                Vector3Int position = new Vector3Int(col, row, 0);
+                if (!this.tilemap.HasTile(position))
+                {
+                    if (this.tilemap.HasTile(new Vector3Int(col, row + 1, 0)) && this.tilemap.HasTile(new Vector3Int(col, row - 1, 0)))
+                    {
+                        holes++;
+                    }
+                }
+            }
+        }
+
+        return holes;
+    }
 
 }
+
