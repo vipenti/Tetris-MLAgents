@@ -58,3 +58,6 @@ sysinfo.txt
 # Crashlytics generated file
 crashlytics-build.properties
 
+*.data-00000-of-00001
+*.pb
+*.DESKTOP-5KM0ST0

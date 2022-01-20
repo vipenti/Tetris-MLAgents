@@ -1,0 +1,248 @@
+using System;
+using UnityEngine;
+
+public class GridState
+{
+    public int NumLines;
+    public int LinesMinRow;
+}
+
+public class Grid : MonoBehaviour
+{
+    public GridState LastState { get; private set; }
+
+    private Transform[,] visualGrid;
+    private int[,] intGrid;
+
+    public void Awake()
+    {
+        LastState = new GridState();
+        //Mantiene un array di posizioni per la griglia
+        visualGrid = new Transform[Settings.GridWidth, Settings.GridHeight];
+        intGrid = new int[Settings.GridWidth, Settings.GridHeight];
+    }
+
+    public void Reset()
+    {
+        for (int y = 0; y < Settings.GridHeight; y++) {
+            for (int x = 0; x < Settings.GridWidth; x++) {
+                ClearCell(x, y);
+            }
+        }
+
+        Array.Clear(visualGrid, 0, visualGrid.GetLength(0) * visualGrid.GetLength(1));
+        Array.Clear(intGrid, 0, intGrid.GetLength(0) * intGrid.GetLength(1));
+    }
+
+    public int[,] GetTempGrid()
+    {
+        return intGrid.Clone() as int[,];
+    }
+
+    public void AddToGrid(Transform segment, int x, int y)
+    {
+        visualGrid[x, y] = segment;
+        intGrid[x, y] = 1;
+    }
+
+    public bool IsCellEmpty(int x, int y)
+    {
+        return intGrid[x, y] == 0;
+    }
+
+    public void ClearCell(int x, int y)
+    {
+        if (visualGrid[x, y] != null)
+        {
+            if (visualGrid[x, y].parent.childCount <= 1)  {
+                Destroy(visualGrid[x, y].parent.gameObject);
+            }
+
+            else {
+                visualGrid[x, y].parent = null;
+                Destroy(visualGrid[x, y].gameObject);
+            }
+
+            visualGrid[x, y] = null;
+        }
+    }
+
+    public bool CheckPositionsAreValid(Vector2Int[] positions, int[,] grid)
+    {
+        foreach (Vector2Int position in positions)
+        {
+            // outside bounds
+            if (position.x < 0 || position.x >= Settings.GridWidth || position.y < 0 || position.y >= Settings.GridHeight)
+            {
+                return false;
+            }
+
+            // already occupied
+            if (grid[position.x, position.y] != 0)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public void MoveBlockDownToPlace(Vector2Int[] positions, ref int[,] grid)
+    {
+        bool placed = false;
+        int shift = 0;
+
+        while (!placed)
+        {
+            shift++;
+            for (int i = 0; i < positions.Length; i++)
+            {
+                positions[i].y--;
+                if (positions[i].y < 0 || grid[positions[i].x, positions[i].y] != 0)
+                {
+                    placed = true;
+                }
+            }
+
+            if (placed)
+            {
+                if (shift > 1)
+                {
+                    for (int i = 0; i < positions.Length; i++)
+                    {
+                        positions[i].y++;
+                    }
+                }
+                else
+                {
+                    break;
+                }
+            }
+        }
+
+        for (int i = 0; i < positions.Length; i++)
+        {
+            grid[positions[i].x, positions[i].y] = 1;
+        }
+    }
+
+    public void GetLines()
+    {
+        LastState.LinesMinRow = Settings.GridHeight;
+        LastState.NumLines = Mathf.RoundToInt(GetLines(ref intGrid, true));
+    }
+
+    public float GetLines(ref int[,] grid, bool isAction = false)
+    {
+        int numLines = 0;
+
+        for (int i = Settings.GridHeight - 1; i >= 0; i--)
+        {
+            if (HasLine(grid, i))
+            {
+                DeleteLine(ref grid, i, isAction);
+                RowDown(ref grid, i, isAction);
+                numLines++;
+
+                if (isAction)
+                {
+                    LastState.LinesMinRow = Math.Min(LastState.LinesMinRow, i);
+                }
+            }
+        }
+
+        return numLines;
+    }
+
+    public bool HasLine(int[,] grid, int i)
+    {
+        for (int j = 0; j < Settings.GridWidth; j++)
+        {
+            if (grid[j, i] == 0)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public void DeleteLine(ref int[,] grid, int i, bool isAction)
+    {
+        for (int j = 0; j < Settings.GridWidth; j++)
+        {
+            grid[j, i] = 0;
+
+            if (isAction)
+            {
+                ClearCell(j, i);
+            }
+        }
+    }
+
+    public void RowDown(ref int[,] grid, int i, bool isAction)
+    {
+        for (int y = i; y < Settings.GridHeight; y++)
+        {
+            for (int x = 0; x < Settings.GridWidth; x++)
+            {
+                if (grid[x, y] == 1)
+                {
+                    grid[x, y - 1] = grid[x, y];
+                    grid[x, y] = 0;
+
+                    if (isAction)
+                    {
+                        visualGrid[x, y - 1] = visualGrid[x, y];
+                        visualGrid[x, y] = null;
+                        visualGrid[x, y - 1].transform.position -= new Vector3(0, 1, 0);
+                    }
+                }
+            }
+        }
+    }
+
+    public void GetGridProperties(int[,] grid, ref float maxHeight, ref float sumHeight, ref float bumpiness, ref float numHoles)
+    {
+        int[] heights = new int[Settings.GridWidth];
+
+        for (int i = 0; i < Settings.GridWidth; i++)
+        {
+            bool foundHeight = false;
+            for (int j = Settings.GridHeight - 1; j >= 0; j--)
+            {
+                if (!foundHeight)
+                {
+                    if (grid[i, j] == 1)
+                    {
+                        heights[i] = j + 1;
+                        sumHeight += j + 1;
+                        maxHeight = Math.Max(maxHeight, j + 1);
+                        foundHeight = true;
+                    }
+                }
+                else
+                {
+                    if (grid[i, j] == 0)
+                    {
+                        numHoles++;
+                    }
+                }
+            }
+        }
+
+        for (int i = 0; i < heights.Length - 1; i++)
+        {
+            bumpiness += Math.Abs(heights[i] - heights[i + 1]);
+        }
+    }
+
+    public void LogState()
+    {
+        float[] states = new float[4];
+        int[,] gridTemp = intGrid.Clone() as int[,];
+        GetGridProperties(gridTemp, ref states[0], ref states[1], ref states[2], ref states[3]);
+
+        Debug.Log(string.Format("maxHeight:{0} totalHeight:{1} bumpiness:{2} numHoles:{3}", states[0], states[1], states[2], states[3]));
+    }
+}
