@@ -21,12 +21,14 @@ public class Board : MonoBehaviour
     public Vector3Int spawnPosition;
     public Vector2Int boardSize = new Vector2Int(10, 20);
 
-    //public GameObject pointsViewer;
-    //public GameObject levelViewer;
+    public GameObject pointsViewer;
+    public GameObject linesViewer;
+    public GameObject levelViewer;
     public GameObject agentController;
 
     public long points;
     public int level;
+    public int lines;
     public int height { get; private set; }
     public int holes { get; private set; }
     public int bumpiness { get; private set; }
@@ -86,50 +88,53 @@ public class Board : MonoBehaviour
 
     public void SpawnPiece()
     {
-        if(MaxHeight() >= 19)
+        if (MaxHeight() >= 19)
         {
             GameOver();
+            this.tilemap.ClearAllTiles();
             return;
         }
 
         //Spawna un pezzo casuale dalla pool
-        int random = GenerateIndex();
-
-        xspawn = 0;
-
-        Debug.Log("Generated piece " + random + "for board " + this.GetInstanceID());
-
-        NextStep(random);
-
-
-        if (random == 0 && xspawn == 3)
-        {
-            this.spawnPosition = new Vector3Int(2, 8, 0);
-        }
-
         else
         {
-            this.spawnPosition = new Vector3Int(xspawn, 8, 0);
-        }
+            int random = GenerateIndex();
 
-        clearedLines = 0;
+            xspawn = 0;
 
-        PieceGroupsData data = this.pieces[random];
+            Debug.Log("Generated piece " + random + "for board " + this.GetInstanceID());
 
-        this.active_piece.Initialize(this, this.spawnPosition, data);
+            NextStep(random);
 
-        DecidedRotation(active_piece, agent.rotation, agent.spawn);        
 
-        Debug.Log("Valid position spawn: " + spawnPosition + " = " + IsValidPosition(this.active_piece, this.spawnPosition));
+            if (random == 0 && xspawn == 3)
+            {
+                this.spawnPosition = new Vector3Int(2, 8, 0);
+            }
 
-        Debug.Log("HOLES: " + Holes());
+            else
+            {
+                this.spawnPosition = new Vector3Int(xspawn, 8, 0);
+            }
 
-        Set(this.active_piece);
+            clearedLines = 0;
 
-        agent.AddReward(+1f);
-        agent.reward += 1f;
-        Debug.Log("Reward: piece placed +1");        
-                
+            PieceGroupsData data = this.pieces[random];
+
+            this.active_piece.Initialize(this, this.spawnPosition, data);
+
+            DecidedRotation(active_piece, agent.rotation, agent.spawn);
+
+            Debug.Log("Valid position spawn: " + spawnPosition + " = " + IsValidPosition(this.active_piece, this.spawnPosition));
+
+            Debug.Log("HOLES: " + Holes());
+
+            Set(this.active_piece);
+
+            agent.AddReward(+1f);
+            agent.reward += 1f;
+            Debug.Log("Reward: piece placed +1");
+        }        
     }
 
 
@@ -256,14 +261,17 @@ public class Board : MonoBehaviour
 
             row++;
         }
+        lines++;
     }
 
     private void GameOver()
     {
         points = 0;
+        lines = 0;
         level = 1;
         clearedLines = 0;
         this.tilemap.ClearAllTiles();
+        indeces = new List<int>();
 
         agent.AddReward(-20f);
         agent.reward -= 20f;
@@ -276,8 +284,15 @@ public class Board : MonoBehaviour
 
     private void UIUpdate()
     {
-       //pointsViewer.GetComponent<Text>().text = "" + points;
-       //levelViewer.GetComponent<Text>().text = "" + level;
+       pointsViewer.GetComponent<Text>().text = "" + points;
+       levelViewer.GetComponent<Text>().text = "" + level;
+       linesViewer.GetComponent<Text>().text = "" + lines + "/10";
+
+        if(lines == 10)
+        {
+            lines = 0;
+            linesViewer.GetComponent<Text>().text = "" + lines + "/10";
+        }
     }
 
     private int LevelUpdate() {
