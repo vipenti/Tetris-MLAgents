@@ -7,7 +7,6 @@ using UnityEngine.UI;
 public class Board : MonoBehaviour
 {
     public GameObject agent;
-    public int holes { get; private set; }
     //Questa classe gestisce la board di gioco
 
     //L'oggetto Board ha una Tilemap come oggetto figlio
@@ -23,10 +22,16 @@ public class Board : MonoBehaviour
     public GameObject pointsViewer;
     public GameObject levelViewer;
 
-    public long points;
-    public int level;
     //variabile aggiunta per capire quando è game over e eseguire l'EndEpisode() e punire l'agente con SetReward();
     public bool game_over = false;
+    public long points;
+    public int level;
+    public int height { get; private set; }
+    public int holes { get; private set; }
+    public int bumpiness { get; private set; }
+    public int clearedLines { get; private set; }
+
+    public bool gameOver { get; private set; }
     //Rettangolo che calcola l'area di gioco usato in IsValidPosition
     public RectInt Bounds
     {
@@ -44,6 +49,11 @@ public class Board : MonoBehaviour
 
         points = 0;
         level = 1;
+        height = 0;
+        holes = 0;
+        bumpiness = 0;
+        clearedLines = 0;
+
 
         //Inizializza la pool dei pezzi da cui pescare per lo spawn casuale
         for (int i = 0; i < this.pieces.Length; i++)
@@ -54,7 +64,7 @@ public class Board : MonoBehaviour
 
     private void Start()
     {
-        SpawnPiece();
+        StartGame();
     }
 
     private void LateUpdate()
@@ -65,6 +75,12 @@ public class Board : MonoBehaviour
             level = LevelUpdate();
             active_piece.stepDelay = active_piece.stepDelay - 0.15f;
         }
+    }
+
+    public void StartGame()
+    {
+        this.tilemap.ClearAllTiles();
+        SpawnPiece();
     }
 
     public void SpawnPiece()
@@ -156,16 +172,19 @@ public class Board : MonoBehaviour
             if (IsLineFull(row))
             {
                 LineClear(row);
+                clearedLines++;
                 combo++;
                 if (combo == 4)
                 {
                     points += 800;
-                    agent.GetComponent<PlayerAgent>().AddReward(0.7f); //premio se fa le combo
+                    agent.GetComponent<PlayerAgent>().AddReward(+20);
+                    Debug.Log("REWARD: 4 LINES CLEARED!!! +20");
                 }
                 else if (combo > 4)
                 {
                     points += 1200;
-                    agent.GetComponent<PlayerAgent>().AddReward(0.7f); //premio se fa le combo
+                    agent.GetComponent<PlayerAgent>().AddReward(+50);
+                    Debug.Log("REWARD: MORE THAN 4 LINES CLEAR!!! +50");
                 }
                 else { points += 100; }
             }
@@ -368,5 +387,109 @@ public class Board : MonoBehaviour
         return holes;
     }
 
+
+    public int Bumpiness()
+    {
+        RectInt bounds = this.Bounds;
+        int bumpiness = 0;
+        int count = 0;
+        List<int> colPieces = new List<int>();
+
+        for (int col = bounds.xMin; col < bounds.xMax; col++)
+        {
+
+            count = 0;
+            for (int row = bounds.yMax, i = 0; row >= bounds.yMin; row--, i++)
+            {
+
+                Vector3Int position = new Vector3Int(col, row, 0);
+                if (this.tilemap.HasTile(position))
+                {
+                    count = 20 - i + 1;
+                    break;
+                }
+            }
+
+            colPieces.Add(count);
+        }
+
+        for (int j = 0; j < colPieces.Count - 1; j++)
+        {
+
+            bumpiness += Mathf.Abs(colPieces[j] - colPieces[j + 1]);
+
+        }
+
+        return bumpiness;
+    }
+
+    public int Height()
+    {
+        RectInt bounds = this.Bounds;
+
+        for (int row = bounds.yMax, height = 20; row > bounds.yMin; row--, height--)
+        {
+            for (int col = bounds.xMin; col < bounds.xMax; col++)
+            {
+
+                Vector3Int position = new Vector3Int(col, row, 0);
+                if (this.tilemap.HasTile(position))
+                {
+
+                    return height + 1;
+                }
+            }
+        }
+
+        return 0;
+    }
+    public void AgentReward()
+    {
+        /*float reward = agent.FitnessFunction();
+        agent.AddReward(reward);
+
+        Debug.Log("REWARD: Fitness Function: " + reward);
+
+        holes = Holes();
+        bumpiness = Bumpiness();
+        height = Height();*/
+        if (bumpiness >= Bumpiness())
+        {
+            agent.GetComponent<PlayerAgent>().AddReward(20f);
+            Debug.Log("REWARD: Better bumpiness! +20");
+        }
+        else
+        {
+            agent.GetComponent<PlayerAgent>().AddReward(-30f);
+            Debug.Log("REWARD: Worse bumpiness! -30");
+        }
+
+        if (Holes() <= holes)
+        {
+            agent.GetComponent<PlayerAgent>().AddReward(20f);
+            Debug.Log("REWARD: No new holes! +20");
+        }
+        else
+        {
+            agent.GetComponent<PlayerAgent>().AddReward(-50f);
+            Debug.Log("REWARD: Made a hole! -50");
+        }
+
+        if (Height() <= height)
+        {
+            agent.GetComponent<PlayerAgent>().AddReward(20f);
+            Debug.Log("REWARD: Stable height! 20");
+        }
+
+        else
+        {
+            agent.GetComponent<PlayerAgent>().AddReward(-40f);
+            Debug.Log("REWARD: Higher height! -40");
+        }
+
+        height = Height();
+        holes = Holes();
+        bumpiness = Bumpiness();
+    }
 }
 

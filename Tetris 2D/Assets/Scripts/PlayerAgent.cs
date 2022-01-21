@@ -33,7 +33,10 @@ public class PlayerAgent : Agent
                 sensor.AddObservation(board.IsCellOccupied(row, col));
             }
         }
-        //sensor.AddObservation(board.holes);
+        sensor.AddObservation(board.clearedLines);
+        sensor.AddObservation(board.holes);
+        sensor.AddObservation(board.bumpiness);
+        sensor.AddObservation(board.height);
     }
 
     public void MoveAgent(ActionSegment<int> act)
@@ -202,9 +205,6 @@ public class PlayerAgent : Agent
     }
 
 
-    public void Reward(float p)
-    {
-        AddReward(p);
-    }
+    
 
 }

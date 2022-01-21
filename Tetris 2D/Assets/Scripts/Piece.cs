@@ -59,7 +59,7 @@ public class Piece : MonoBehaviour
     public void Update()
     {
         this.board.Clear(this);
-
+        this.board.AgentReward();
         this.lockTime += Time.deltaTime;
 
         //qui stavo cercando di fare cose per far funzionare il codice in modalità Heuristic
