@@ -4,5 +4,5 @@
 
 <p> This is a Unity project with a Tetris game. We trained a neural network with the ML Agents library to play it through reinforcement learning 🎮 </p>
 
-(https://www.youtube.com/watch?v=a2hOoE1M8hk](https://youtu.be/uDeYoKnYcuU)https://youtu.be/uDeYoKnYcuU)
+[![IMAGE ALT TEXT HERE](https://i9.ytimg.com/vi_webp/uDeYoKnYcuU/mq2.webp?sqp=CODb4aQG-oaymwEmCMACELQB8quKqQMa8AEB-AHUBoAC4AOKAgwIABABGC0gEyh_MA8=&rs=AOn4CLCAX5wzVP5XUdXYBuvsOT3a_PsDnw)](https://youtu.be/uDeYoKnYcuU)
 <br/>
